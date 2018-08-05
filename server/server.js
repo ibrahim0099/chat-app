@@ -2,6 +2,7 @@ var path=require('path');
 var express=require('express');
 var http=require('http');
 var socketIO=require('socket.io');
+const {generateMessage}=require('./utils/message');
 var port=process.env.port||3000;
 var file_path=path.join(__dirname,'../public');
 var app=express();
@@ -12,24 +13,14 @@ app.use(express.static(file_path));
 io.on('connection',function(socket){
     console.log('new user is connected!');
    
-    socket.emit('WelcomeMsg',{
-       from: 'Admin',
-       test: 'Welcome to the chat room!',
-       date: new Date().getTime()
-   });
+    socket.emit('WelcomeMsg',generateMessage('admin','Welcome to chat room!'));
 
-   socket.broadcast.emit('UserJoinMsg',{
-    from: 'Admin',
-    test: 'New user join!',
-    date: new Date().getTime()
-   });
+   socket.broadcast.emit('UserJoinMsg',generateMessage('admin','New user join!'));
 
-    socket.on('createMsg',function(msgData){
+    socket.on('createMsg',function(msgData,callback){
         console.log('Create msg : ',msgData);
-        socket.broadcast.emit('newMsg',{
-            from:msgData.from,
-            text:msgData.text
-        });
+        io.emit('newMsg',generateMessage(msgData.from,msgData.text));
+        callback('This is from server');
     })
    
     socket.on('disconnect',function(){
